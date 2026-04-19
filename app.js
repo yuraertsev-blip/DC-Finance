@@ -273,8 +273,10 @@ function renderDataEntry() {
             const dateStr = formatDateStr(state.currentDate);
             if (e.target.value === '__add__') {
                 const exps = state.expenses[dateStr] || [];
-                e.target.value = (exps[idx] && exps[idx].name) || ''; // revert UI immediately
-                openModal(catSelect.value, idx, dateStr);
+                e.target.value = (exps[idx] && exps[idx].name) || '';
+                // Read categoryId from state, not DOM — Safari/iOS can return empty catSelect.value after innerHTML update
+                const catId = (exps[idx] && exps[idx].categoryId) || catSelect.value;
+                openModal(catId, idx, dateStr);
             } else {
                 updateExpense(dateStr, idx, 'name', e.target.value);
             }
