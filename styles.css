@@ -459,6 +459,9 @@ main#view-container {
     color: var(--accent-income);
     font-size: 18px;
 }
+.income-detail-row.total .source-value.expense-total-value {
+    color: var(--accent-expense);
+}
 .summary-card.expense::before { background: var(--accent-expense); }
 .summary-card .label {
     font-size: 13px;
