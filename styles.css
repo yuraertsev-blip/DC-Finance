@@ -13,21 +13,18 @@
     --trans: 0.2s ease;
     --nav-height: 72px;
 }
-
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     font-family: 'Outfit', sans-serif;
 }
-
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
 }
-
 #app {
     display: flex;
     flex-direction: column;
@@ -39,7 +36,6 @@ body {
     background: var(--bg-color);
     box-shadow: var(--shadow-float);
 }
-
 /* === Views === */
 main#view-container {
     flex: 1;
@@ -47,7 +43,6 @@ main#view-container {
     overflow-x: hidden;
     padding-bottom: calc(var(--nav-height) + 20px);
 }
-
 .view {
     display: none;
     flex-direction: column;
@@ -57,12 +52,10 @@ main#view-container {
 .view.active {
     display: flex;
 }
-
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
 .view-header {
     padding: 24px 20px 10px;
     background: var(--bg-color);
@@ -74,14 +67,12 @@ main#view-container {
     font-size: 28px;
     font-weight: 600;
 }
-
 .content-scrollable {
     padding: 10px 20px 120px; /* Увеличен отступ снизу */
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
-
 /* === Cards === */
 .card {
     background: var(--card-bg);
@@ -89,7 +80,6 @@ main#view-container {
     padding: 20px;
     box-shadow: var(--shadow-soft);
 }
-
 .card-header {
     display: flex;
     justify-content: space-between;
@@ -104,7 +94,6 @@ main#view-container {
     color: var(--text-muted);
     font-size: 14px;
 }
-
 /* === Calendar === */
 .calendar-container {
     padding: 20px;
@@ -144,7 +133,6 @@ main#view-container {
 .icon-btn.danger {
     color: var(--accent-expense);
 }
-
 .calendar-days {
     display: flex;
     flex-direction: row;
@@ -194,7 +182,6 @@ main#view-container {
     border-radius: 50%;
     margin-top: 4px;
 }
-
 /* === Inputs === */
 .input-modern {
     display: flex;
@@ -226,20 +213,17 @@ main#view-container {
     font-weight: 500;
     margin-left: 8px;
 }
-
 .total-income-display {
     font-size: 20px;
     font-weight: 700;
     color: var(--accent-income);
 }
-
 .income-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-top: 8px;
 }
-
 .income-source label {
     font-size: 13px;
     color: var(--text-muted);
@@ -247,16 +231,13 @@ main#view-container {
     margin-bottom: 4px;
     display: block;
 }
-
 .input-modern.small input {
     font-size: 20px;
     padding: 4px 0;
 }
-
 .input-modern.small .currency {
     font-size: 16px;
 }
-
 /* === Table === */
 .expenses-table {
     display: flex;
@@ -295,7 +276,6 @@ main#view-container {
 .align-right {
     text-align: right;
 }
-
 .table-input, .table-select {
     width: 100%;
     border: none;
@@ -327,7 +307,6 @@ main#view-container {
     width: 100%;
     font-weight: 500;
 }
-
 /* === Bottom Nav === */
 .bottom-nav {
     position: absolute;
@@ -368,7 +347,6 @@ main#view-container {
 .nav-item.active svg {
     stroke-width: 2.5;
 }
-
 /* === Analytics === */
 .date-picker-group {
     display: flex;
@@ -392,7 +370,6 @@ main#view-container {
     color: var(--text-main);
     outline: none;
 }
-
 .summary-cards {
     display: flex;
     gap: 16px;
@@ -418,8 +395,71 @@ main#view-container {
     height: 4px;
 }
 .summary-card.income::before { background: var(--accent-income); }
+/* Clickable income card */
+.summary-card.clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.summary-card.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-float);
+}
+.summary-card.clickable:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-soft);
+}
+.detail-icon {
+    vertical-align: middle;
+    margin-left: 4px;
+    opacity: 0.5;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.summary-card.clickable:hover .detail-icon {
+    opacity: 1;
+    transform: translateX(2px);
+}
+/* Income details modal list */
+.income-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 20px;
+}
+.income-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+.income-detail-row:last-child {
+    border-bottom: none;
+}
+.income-detail-row.total {
+    border-top: 2px solid var(--text-main);
+    border-bottom: none;
+    margin-top: 4px;
+    padding-top: 16px;
+}
+.source-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-main);
+}
+.source-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.income-detail-row.total .source-name {
+    font-weight: 700;
+    font-size: 16px;
+}
+.income-detail-row.total .source-value {
+    color: var(--accent-income);
+    font-size: 18px;
+}
 .summary-card.expense::before { background: var(--accent-expense); }
-
 .summary-card .label {
     font-size: 13px;
     color: var(--text-muted);
@@ -431,7 +471,6 @@ main#view-container {
     color: var(--text-main);
 }
 .summary-card.income .value { color: var(--accent-income); }
-
 .btn-outline {
     width: 100%;
     display: flex;
@@ -457,7 +496,6 @@ main#view-container {
 .btn-outline.open svg {
     transform: rotate(180deg);
 }
-
 .category-list {
     margin-top: 16px;
     display: flex;
@@ -527,7 +565,6 @@ main#view-container {
     font-weight: 600;
     font-size: 15px;
 }
-
 /* === Settings === */
 .settings-list {
     list-style: none;
@@ -553,7 +590,6 @@ main#view-container {
 .settings-item input:focus {
     border-bottom: 1px solid var(--text-main);
 }
-
 /* === Modal & Settings Subitems === */
 .modal-overlay {
     position: fixed;
@@ -613,7 +649,6 @@ main#view-container {
     color: white;
     border-color: var(--text-main);
 }
-
 .settings-items-list {
     margin-top: 12px;
     padding-left: 12px;
@@ -640,7 +675,6 @@ main#view-container {
     margin-top: 12px;
     padding: 4px 0;
 }
-
 /* === Auth Overlay === */
 #auth-overlay {
     position: fixed;
@@ -656,7 +690,6 @@ main#view-container {
 #auth-overlay.hidden {
     display: none;
 }
-
 /* Chart */
 .chart-container {
     height: 200px;
@@ -704,7 +737,6 @@ main#view-container {
 .chart-bar-wrapper:hover .chart-tooltip {
     opacity: 1;
 }
-
 /* === Mobile Responsiveness === */
 @media (max-width: 500px) {
     .table-header {
