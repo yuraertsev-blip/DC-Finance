@@ -555,6 +555,26 @@ function renderAnalytics() {
         if (sortedCats.length === 0) {
             reportContainer.innerHTML = '<p class="muted">Нет расходов за этот период</p>';
         }
+        // Update expense details modal list
+        const expModalList = document.getElementById('expense-modal-list');
+        if (sortedCats.length > 0) {
+            let expModalHtml = sortedCats.map(([catId, amount]) => {
+                const cat = state.categories.find(c => c.id === catId);
+                const catName = cat ? cat.name : 'Удаленная категория';
+                const perc = totalExp > 0 ? ` (${Math.round(amount / totalExp * 100)}%)` : '';
+                return `<div class="income-detail-row">
+                    <span class="source-name">${catName}</span>
+                    <span class="source-value">${formatNumber(amount)} ₽<span class="muted" style="font-weight:400; font-size:12px; margin-left:4px;">${perc}</span></span>
+                </div>`;
+            }).join('');
+            expModalHtml += `<div class="income-detail-row total">
+                <span class="source-name">Итого</span>
+                <span class="source-value expense-total-value">${formatNumber(totalExp)} ₽</span>
+            </div>`;
+            expModalList.innerHTML = expModalHtml;
+        } else {
+            expModalList.innerHTML = '<p class="muted" style="padding: 16px 0;">Нет расходов за выбранный период</p>';
+        }
     };
     dateFromEl.addEventListener('change', calcAndRender);
     dateToEl.addEventListener('change', calcAndRender);
@@ -572,6 +592,14 @@ function renderAnalytics() {
     };
     document.getElementById('income-modal-close').onclick = () => {
         incomeModal.classList.add('hidden');
+    };
+    // Expense details modal
+    const expenseModal = document.getElementById('expense-details-modal');
+    document.getElementById('expense-card-clickable').onclick = () => {
+        expenseModal.classList.remove('hidden');
+    };
+    document.getElementById('expense-modal-close').onclick = () => {
+        expenseModal.classList.add('hidden');
     };
     calcAndRender();
 }
@@ -957,4 +985,3 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Critical error during app init:", e);
     }
 });
-
