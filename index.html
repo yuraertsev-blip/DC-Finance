@@ -114,8 +114,10 @@
                             </span>
                             <span class="value" id="summary-income">0 ₽</span>
                         </div>
-                        <div class="summary-card expense">
-                            <span class="label">Общие расходы</span>
+                        <div class="summary-card expense clickable" id="expense-card-clickable">
+                            <span class="label">Общие расходы
+                                <svg class="detail-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                            </span>
                             <span class="value" id="summary-expense">0 ₽</span>
                         </div>
                     </div>
@@ -233,6 +235,18 @@
                 </div>
                 <div class="modal-actions">
                     <button id="income-modal-close" class="btn-outline primary">Закрыть</button>
+                </div>
+            </div>
+        </div>
+        <!-- Modal for expense details -->
+        <div id="expense-details-modal" class="modal-overlay hidden">
+            <div class="modal-card">
+                <h3>Расходы по категориям</h3>
+                <div class="income-details-list" id="expense-modal-list">
+                    <!-- Injected by JS -->
+                </div>
+                <div class="modal-actions">
+                    <button id="expense-modal-close" class="btn-outline primary">Закрыть</button>
                 </div>
             </div>
         </div>
