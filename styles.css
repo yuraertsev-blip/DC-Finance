@@ -697,6 +697,8 @@ main#view-container {
 .chart-scroll-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    display: flex;
     margin-top: 16px;
     border-radius: 8px;
 }
@@ -710,10 +712,12 @@ main#view-container {
 .chart-container {
     height: 200px;
     display: flex;
+    scroll-behavior: smooth;
     align-items: flex-end;
     gap: 4px;
     position: relative;
-    /* min-width is set dynamically by JS based on data.length */
+    min-width: 600px;
+    /* min-width is overridden dynamically by JS based on data.length */
 }
 .chart-bar-wrapper {
     width: 44px;
