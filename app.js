@@ -884,9 +884,12 @@ function renderSettings() {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const iIdx = parseInt(btn.getAttribute('data-item'));
-                state.categories[idx].items.splice(iIdx, 1);
-                saveState('categories');
-                renderSettings();
+                const itemName = state.categories[idx].items[iIdx];
+                if (confirm(`Удалить наименование "${itemName}"?`)) {
+                    state.categories[idx].items.splice(iIdx, 1);
+                    saveState('categories');
+                    renderSettings();
+                }
             });
         });
         const btnAdd = li.querySelector('.btn-add-item');
