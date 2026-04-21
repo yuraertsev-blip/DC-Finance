@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dc-finance-v3';
+const CACHE_NAME = 'dc-finance-v4';
 const urlsToCache = [
   './',
   './index.html',
@@ -8,7 +8,6 @@ const urlsToCache = [
   './icon.svg',
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap'
 ];
-
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -17,7 +16,6 @@ self.addEventListener('install', (event) => {
       })
   );
 });
-
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
@@ -29,7 +27,6 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
-
 self.addEventListener('activate', (event) => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
