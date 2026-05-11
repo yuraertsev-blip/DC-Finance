@@ -1141,9 +1141,27 @@ function initAuth() {
         const username = document.getElementById('login-username').value.trim().toLowerCase();
         const password = document.getElementById('login-password').value;
         loginError.textContent = '';
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Вход...';
         
         if (username === 'diamond' && password === '2015redbull@') {
-            // Успешный вход
+            const email = 'diamond@diamondcanvas.app';
+            try {
+                // Пытаемся авторизоваться в Firebase, чтобы база данных разрешила сохранение
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (err) {
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+                    try {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                    } catch (createErr) {
+                        console.error('[DC-AUTH] Create user failed:', createErr);
+                    }
+                } else {
+                    console.error('[DC-AUTH] Firebase Login failed:', err);
+                }
+            }
+            
+            // В любом случае пускаем в интерфейс
             localStorage.setItem('dc_auth_bypass', 'true');
             document.getElementById('login-password').value = '';
             authScreen.classList.add('hidden');
@@ -1152,6 +1170,9 @@ function initAuth() {
         } else {
             loginError.textContent = 'Неверный логин или пароль';
         }
+        
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Войти';
     });
 
     // Добавляем вход по кнопке Enter
