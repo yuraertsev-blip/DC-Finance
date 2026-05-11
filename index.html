@@ -14,7 +14,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 </head>
 <body>
-
     <!-- Auth Screen (hidden until auth is enabled — see initAuth() in app.js) -->
     <div id="auth-screen" class="hidden">
         <div class="auth-card">
@@ -28,6 +27,8 @@
             <div class="auth-field">
                 <label>Email</label>
                 <input type="email" id="login-email" placeholder="email@example.com" autocomplete="email">
+                <label>Логин</label>
+                <input type="text" id="login-username" placeholder="Введите логин" autocomplete="username">
             </div>
             <div class="auth-field">
                 <label>Пароль</label>
@@ -37,7 +38,6 @@
             <div id="login-error" class="auth-error"></div>
         </div>
     </div>
-
     <div id="app">
         <!-- Views will be dynamically injected here -->
         <main id="view-container">
@@ -57,7 +57,6 @@
                         <!-- Days injected via JS -->
                     </div>
                 </div>
-
                 <div class="content-scrollable">
                     <!-- Income Block -->
                     <div class="card income-card">
@@ -96,7 +95,6 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Expenses Block -->
                     <div class="card expenses-card">
                         <div class="card-header">
@@ -117,7 +115,6 @@
                     </div>
                 </div>
             </section>
-
             <!-- Analytics View -->
             <section id="view-analytics" class="view">
                 <div class="view-header">
@@ -134,7 +131,6 @@
                             <input type="date" id="date-to">
                         </div>
                     </div>
-
                     <div class="summary-cards">
                         <div class="summary-card income clickable" id="income-card-clickable">
                             <span class="label">Общие доходы
@@ -149,7 +145,6 @@
                             <span class="value" id="summary-expense">0 ₽</span>
                         </div>
                     </div>
-
                     <div class="card chart-card">
                         <h3>График выручки</h3>
                         <div class="chart-scroll-wrapper">
@@ -158,7 +153,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="card report-card">
                         <button id="btn-export-excel" class="btn-outline">
                             Выгрузить отчет (Excel)
@@ -167,7 +161,6 @@
                     </div>
                 </div>
             </section>
-
             <!-- Settings View -->
             <section id="view-settings" class="view">
                 <div class="view-header">
@@ -185,7 +178,6 @@
                             <!-- Categories injected by JS -->
                         </ul>
                     </div>
-
                     <div class="card backup-card">
                         <div class="card-header">
                             <h3>Резервное копирование</h3>
@@ -202,7 +194,6 @@
                             <input type="file" id="input-import-backup" accept=".json" style="display: none;">
                         </div>
                     </div>
-
                     <div class="card" id="logout-card" style="display:none;">
                         <button id="btn-logout" class="btn-logout" onclick="handleLogout()">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
@@ -212,7 +203,6 @@
                 </div>
             </section>
         </main>
-
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
             <button class="nav-item active" data-target="view-data">
@@ -240,7 +230,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Modal for income details -->
         <div id="income-details-modal" class="modal-overlay hidden">
             <div class="modal-card">
@@ -272,7 +261,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Modal for expense details -->
         <div id="expense-details-modal" class="modal-overlay hidden">
             <div class="modal-card">
@@ -285,7 +273,6 @@
                 </div>
             </div>
         </div>
-
     </div>
     
     <script>
@@ -294,7 +281,16 @@
                 navigator.serviceWorker.register('./sw.js')
                     .then((reg) => console.log('SW registered'))
                     .catch((err) => console.log('SW failed: ', err));
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
             });
+            if (caches) {
+                caches.keys().then(function(names) {
+                    for (let name of names) caches.delete(name);
+                });
+            }
         }
     </script>
     <script type="module" src="app.js"></script>
