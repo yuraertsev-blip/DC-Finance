@@ -1026,18 +1026,23 @@ function initAuth() {
     }
     loginBtn.addEventListener('click', async () => {
         const email = document.getElementById('login-email').value.trim();
-        const username = document.getElementById('login-username').value.trim();
+        const username = document.getElementById('login-username').value.trim().toLowerCase();
         const password = document.getElementById('login-password').value;
         loginError.textContent = '';
         loginBtn.disabled = true;
         loginBtn.textContent = 'Вход...';
-        if (username !== 'diamond' || password !== '2015redbull@') {
+        
+        if (username === 'diamond' && password === '2015redbull@') {
+            // Успешный вход
+            localStorage.setItem('dc_auth_bypass', 'true');
+            document.getElementById('login-password').value = '';
+            authScreen.classList.add('hidden');
+            appEl.classList.remove('hidden');
+            bootApp();
+        } else {
             loginError.textContent = 'Неверный логин или пароль';
-            loginBtn.disabled = false;
-            loginBtn.textContent = 'Войти';
-            return;
         }
-        const email = 'diamond@diamondcanvas.app';
+    });
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (err) {
@@ -1050,21 +1055,13 @@ function initAuth() {
                 'auth/too-many-requests': 'Слишком много попыток. Подождите.',
             };
             loginError.textContent = messages[err.code] || 'Ошибка входа: ' + err.message;
-            // Если аккаунт еще не создан
-            if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-                try {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                } catch (createErr) {
-                    console.error('[DC-AUTH] Create user failed:', createErr);
-                    loginError.textContent = 'Ошибка инициализации аккаунта';
-                }
-            } else {
-                console.error('[DC-AUTH] Login failed:', err);
-                loginError.textContent = 'Ошибка входа: ' + err.message;
-            }
         } finally {
             loginBtn.disabled = false;
             loginBtn.textContent = 'Войти';
+    // Добавляем вход по кнопке Enter
+    document.getElementById('login-password').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            loginBtn.click();
         }
     });
     // Listen for auth state
@@ -1072,6 +1069,9 @@ function initAuth() {
         if (user) {
             console.log('[DC-AUTH] User signed in:', user.email);
             currentUser = user;
+        if (user || localStorage.getItem('dc_auth_bypass') === 'true') {
+            console.log('[DC-AUTH] User signed in or bypassed');
+            if (user) currentUser = user;
             authScreen.classList.add('hidden');
             appEl.classList.remove('hidden');
             bootApp();
@@ -1086,9 +1086,13 @@ function initAuth() {
 }
 function handleLogout() {
     if (confirm('Выйти из аккаунта?')) {
+        localStorage.removeItem('dc_auth_bypass');
         signOut(auth).then(() => {
             console.log('[DC-AUTH] Signed out');
             showToast('Вы вышли из аккаунта', 'info');
+            window.location.reload();
+        }).catch(() => {
+            window.location.reload();
         });
     }
 }
