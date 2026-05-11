@@ -1,13 +1,12 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 // === Firebase Init ===
 console.log("App Version: 4.0.0 - Diamond Canvas (with Auth)");
 let app, db, auth;
 let unsubscribeSnapshot = null;
 let currentUser = null;
-
 try {
     const firebaseConfig = {
       apiKey: "AIzaSyA15XcKQNF8vg72GoFflNOPqv4PthJF_EY",
@@ -18,7 +17,6 @@ try {
       appId: "1:343229435947:web:0ed9c0c5660ba5e3fd9a6e",
       measurementId: "G-3GNG09F2X0"
     };
-
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
@@ -27,18 +25,15 @@ try {
     console.error('[DC-INIT] Firebase init FAILED:', e);
     showToast('Ошибка инициализации Firebase', 'error');
 }
-
 // === Toast Notification System ===
 function showToast(message, type = 'info', durationMs = 4000) {
     const existing = document.getElementById('dc-toast');
     if (existing) existing.remove();
-
     const toast = document.createElement('div');
     toast.id = 'dc-toast';
     toast.className = `dc-toast dc-toast-${type}`;
     toast.textContent = message;
     document.body.appendChild(toast);
-
     // Trigger animation
     requestAnimationFrame(() => toast.classList.add('show'));
     setTimeout(() => {
@@ -46,7 +41,6 @@ function showToast(message, type = 'info', durationMs = 4000) {
         setTimeout(() => toast.remove(), 300);
     }, durationMs);
 }
-
 // === State & LocalStorage ===
 const STORE_PREFIX = 'diamond_canvas';
 const DEFAULT_CATEGORIES = [
@@ -56,17 +50,14 @@ const DEFAULT_CATEGORIES = [
     { id: 'cat_4', name: 'Продукты', items: [] },
     { id: 'cat_5', name: 'Налоги', items: [] },
 ];
-
 let state = {
     currentDate: new Date(),
     categories: [],
     income: {}, // { 'YYYY-MM-DD': { soc, wb, ozon, yandex } }
     expenses: {} // { 'YYYY-MM-DD': [{ id, name, categoryId, amount }] }
 };
-
 function loadState() {
     if (unsubscribeSnapshot) unsubscribeSnapshot();
-
     console.log('[DC-LOAD] Subscribing to Firestore: dc_finance/main_state');
     
     unsubscribeSnapshot = onSnapshot(doc(db, 'dc_finance', 'main_state'), (docSnap) => {
@@ -76,7 +67,6 @@ function loadState() {
             const incDays = Object.keys(data.income || {}).length;
             const expDays = Object.keys(data.expenses || {}).length;
             console.log(`[DC-LOAD] Snapshot received: ${catCount} categories, ${incDays} income days, ${expDays} expense days`);
-
             state.categories = sanitizeCategories(data.categories || [...DEFAULT_CATEGORIES]);
             state.income = data.income || {};
             state.expenses = data.expenses || {};
@@ -105,7 +95,6 @@ function loadState() {
         showToast('Ошибка загрузки данных: ' + error.message, 'error');
     });
 }
-
 /** Ensure every category has an `items` array — prevents Firestore undefined issues */
 function sanitizeCategories(cats) {
     return cats.map(cat => ({
@@ -113,23 +102,19 @@ function sanitizeCategories(cats) {
         items: Array.isArray(cat.items) ? cat.items : []
     }));
 }
-
 function saveState() {
     const payload = {
         categories: sanitizeCategories(state.categories),
         income: state.income,
         expenses: state.expenses
     };
-
     // Debug: log payload size to detect document bloat
     const payloadSize = JSON.stringify(payload).length;
     console.log(`[DC-SAVE] Writing to Firestore (${(payloadSize / 1024).toFixed(1)} KB)...`);
-
     if (payloadSize > 900_000) {
         console.warn('[DC-SAVE] WARNING: Document approaching 1MB Firestore limit!');
         showToast('Внимание: база данных почти заполнена', 'error', 6000);
     }
-
     setDoc(doc(db, 'dc_finance', 'main_state'), payload, { merge: true })
     .then(() => {
         console.log('[DC-SAVE] ✅ Data saved successfully');
@@ -139,9 +124,7 @@ function saveState() {
         showToast('Ошибка сохранения: ' + error.message, 'error', 6000);
     });
 }
-
 // === Utils ===
-
 /** Check if user is actively editing (input/select/textarea focused) */
 function isUserEditing() {
     const el = document.activeElement;
@@ -149,7 +132,6 @@ function isUserEditing() {
     const tag = el.tagName;
     return tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
 }
-
 /** Debounced save — batches rapid keystrokes into a single Firebase write */
 let _saveTimer = null;
 function debouncedSave(delay = 600) {
@@ -161,31 +143,25 @@ function formatDateStr(date) {
     let month = '' + (d.getMonth() + 1);
     let day = '' + d.getDate();
     let year = d.getFullYear();
-
     if (month.length < 2) month = '0' + month;
     if (day.length < 2) day = '0' + day;
-
     return [year, month, day].join('-');
 }
-
 function parseLocalDate(dateStr) {
     if (!dateStr) return new Date();
     const parts = dateStr.split('-');
     if (parts.length !== 3) return new Date(dateStr);
     return new Date(parts[0], parts[1] - 1, parts[2]);
 }
-
 function formatNumber(num) {
     if (!num) return '';
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
-
 function parseNumber(str) {
     if (!str) return 0;
     if (typeof str === 'number') return str;
     return parseInt(str.toString().replace(/\s/g, ''), 10) || 0;
 }
-
 function getDailyIncome(dateStr) {
     const inc = state.income[dateStr];
     if (!inc) return 0;
@@ -194,19 +170,16 @@ function getDailyIncome(dateStr) {
     }
     return parseNumber(inc) || 0;
 }
-
 // === Navigation ===
 function initNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     const views = document.querySelectorAll('.view');
-
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             const targetId = item.getAttribute('data-target');
             
             navItems.forEach(n => n.classList.remove('active'));
             item.classList.add('active');
-
             views.forEach(v => {
                 if (v.id === targetId) {
                     v.classList.add('active');
@@ -214,7 +187,6 @@ function initNavigation() {
                     v.classList.remove('active');
                 }
             });
-
             // Refresh specific views on enter
             if (targetId === 'view-data') {
                 updateValuesOnly();
@@ -226,7 +198,6 @@ function initNavigation() {
         });
     });
 }
-
 // === Calendar ===
 function initCalendar() {
     const btnPrev = document.getElementById('cal-prev');
@@ -245,24 +216,18 @@ function initCalendar() {
         renderDataEntry();
         updateValuesOnly();
     });
-
     renderCalendar();
 }
-
 function renderCalendar() {
     const monthYearStr = state.currentDate.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
     document.getElementById('cal-month-year').textContent = monthYearStr.charAt(0).toUpperCase() + monthYearStr.slice(1);
-
     const grid = document.getElementById('cal-days-grid');
     grid.innerHTML = '';
-
     const year = state.currentDate.getFullYear();
     const month = state.currentDate.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
     const weekdays = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
     let activeElement = null;
-
     for (let i = 1; i <= daysInMonth; i++) {
         const d = new Date(year, month, i);
         const dateStr = formatDateStr(d);
@@ -279,7 +244,6 @@ function renderCalendar() {
         if (getDailyIncome(dateStr) > 0 || (state.expenses[dateStr] && state.expenses[dateStr].some(e => e.amount > 0))) {
             el.classList.add('has-data');
         }
-
         const weekdayIndex = d.getDay();
         
         el.innerHTML = `
@@ -303,7 +267,6 @@ function renderCalendar() {
         });
     }
 }
-
 // === Data Entry ===
 function setupInputFormatting(inputEl, callback) {
     inputEl.addEventListener('input', (e) => {
@@ -319,7 +282,6 @@ function setupInputFormatting(inputEl, callback) {
         if (callback) callback(parseNumber(e.target.value));
     });
 }
-
 function renderDataEntry() {
     const sources = ['soc', 'wb', 'ozon', 'yandex'];
     sources.forEach(src => {
@@ -341,13 +303,10 @@ function renderDataEntry() {
             });
         }
     });
-
     const rowsContainer = document.getElementById('expenses-rows');
     if (!rowsContainer) return;
-
     // Skip full rebuild if rows already exist — prevents focus/scroll loss
     if (rowsContainer.children.length > 0) return;
-
     rowsContainer.innerHTML = '';
     
     for (let idx = 0; idx < 15; idx++) {
@@ -377,16 +336,13 @@ function renderDataEntry() {
         const catSelect = row.querySelector('.exp-cat');
         const amountInput = row.querySelector('.exp-amount');
         const clearBtn = row.querySelector('.btn-clear-row');
-
         amountInput.addEventListener('focus', function() { this.select(); });
-
         catSelect.addEventListener('change', (e) => {
             const dateStr = formatDateStr(state.currentDate);
             updateExpense(dateStr, idx, 'categoryId', e.target.value);
             updateExpense(dateStr, idx, 'name', '');
             updateValuesOnly(); 
         });
-
         nameSelect.addEventListener('change', (e) => {
             const dateStr = formatDateStr(state.currentDate);
             if (e.target.value === '__add__') {
@@ -399,12 +355,10 @@ function renderDataEntry() {
                 updateExpense(dateStr, idx, 'name', e.target.value);
             }
         });
-
         setupInputFormatting(amountInput, (val) => {
             const dateStr = formatDateStr(state.currentDate);
             updateExpenseLocal(dateStr, idx, 'amount', val);
         });
-
         clearBtn.addEventListener('click', () => {
             const dateStr = formatDateStr(state.currentDate);
             if (!state.expenses[dateStr]) return;
@@ -412,11 +366,9 @@ function renderDataEntry() {
             saveState();
             updateValuesOnly();
         });
-
         rowsContainer.appendChild(row);
     }
 }
-
 function updateValuesOnly() {
     const dateStr = formatDateStr(state.currentDate);
     
@@ -434,7 +386,6 @@ function updateValuesOnly() {
             inputEl.value = formatNumber(val);
         }
     });
-
     const totalEl = document.getElementById('daily-income-total');
     if (totalEl) {
         totalEl.textContent = `${formatNumber(getDailyIncome(dateStr))} ₽`;
@@ -454,7 +405,6 @@ function updateValuesOnly() {
         const nameSelect = row.querySelector('.exp-name');
         const amountInput = row.querySelector('.exp-amount');
         const activeEl = document.activeElement;
-
         if (catSelect && activeEl !== catSelect) {
             let catOptions = `<option value="">Выбрать...</option>`;
             state.categories.forEach(cat => {
@@ -462,7 +412,6 @@ function updateValuesOnly() {
             });
             catSelect.innerHTML = catOptions;
         }
-
         if (nameSelect && activeEl !== nameSelect) {
             nameSelect.disabled = !exp.categoryId;
             let nameOptions = `<option value="">Выбрать...</option>`;
@@ -485,15 +434,12 @@ function updateValuesOnly() {
             }
             nameSelect.innerHTML = nameOptions;
         }
-
         if (amountInput && activeEl !== amountInput) {
             amountInput.value = formatNumber(exp.amount) || '';
         }
     }
-
     updateExpenseTotal(dateStr);
 }
-
 function updateExpense(dateStr, index, field, value) {
     if (!state.expenses[dateStr]) {
         state.expenses[dateStr] = Array(15).fill().map(() => ({ name: '', categoryId: '', amount: 0 }));
@@ -506,7 +452,6 @@ function updateExpense(dateStr, index, field, value) {
         renderCalendar(); // Update dots
     }
 }
-
 /** Debounced version for amount inputs — prevents Firebase flood during typing */
 function updateExpenseLocal(dateStr, index, field, value) {
     if (!state.expenses[dateStr]) {
@@ -519,16 +464,13 @@ function updateExpenseLocal(dateStr, index, field, value) {
         updateExpenseTotal(dateStr);
     }
 }
-
 function updateExpenseTotal(dateStr) {
     const exps = state.expenses[dateStr] || [];
     const total = exps.reduce((acc, curr) => acc + (parseInt(curr.amount) || 0), 0);
     document.getElementById('expense-total').textContent = `${formatNumber(total)} ₽`;
 }
-
 // === Modal (Names) ===
 let currentModalContext = { categoryId: null, rowIndex: null, dateStr: null };
-
 function openModal(categoryId, rowIndex = null, dateStr = null) {
     currentModalContext = { categoryId, rowIndex, dateStr };
     const modal = document.getElementById('add-name-modal');
@@ -537,17 +479,13 @@ function openModal(categoryId, rowIndex = null, dateStr = null) {
     modal.classList.remove('hidden');
     setTimeout(() => input.focus(), 100);
 }
-
 function initModal() {
     const modal = document.getElementById('add-name-modal');
     const cancelBtn = document.getElementById('modal-cancel-btn');
     const saveBtn = document.getElementById('modal-save-btn');
     const input = document.getElementById('new-item-name');
-
     const closeModal = () => modal.classList.add('hidden');
-
     cancelBtn.onclick = closeModal;
-
     saveBtn.onclick = () => {
         const val = input.value.trim();
         if (!val || !currentModalContext.categoryId) {
@@ -576,7 +514,6 @@ function initModal() {
         closeModal();
     };
 }
-
 // === Analytics ===
 function renderAnalytics() {
     const dateFromEl = document.getElementById('date-from');
@@ -594,19 +531,16 @@ function renderAnalytics() {
         d.setDate(0);
         dateToEl.value = formatDateStr(d);
     }
-
     const calcAndRender = () => {
         const from = parseLocalDate(dateFromEl.value);
         const to = parseLocalDate(dateToEl.value);
         if (from > to) return;
-
         let totalInc = 0;
         let totalExp = 0;
         const catTotals = {};
         const catDetails = {};
         const dailyIncomes = [];
         let sourcesTotal = { soc: 0, wb: 0, ozon: 0, yandex: 0 };
-
         // Loop through all days in range
         let curr = new Date(from);
         while (curr <= to) {
@@ -614,7 +548,6 @@ function renderAnalytics() {
             const inc = getDailyIncome(dStr);
             totalInc += inc;
             dailyIncomes.push({ date: dStr, val: inc });
-
             // Accumulate per-source totals
             const incObj = state.income[dStr];
             if (incObj && typeof incObj === 'object') {
@@ -626,7 +559,6 @@ function renderAnalytics() {
                 // Legacy: single number goes to soc
                 sourcesTotal.soc += parseNumber(incObj) || 0;
             }
-
             const exps = state.expenses[dStr] || [];
             exps.forEach(e => {
                 const am = parseInt(e.amount) || 0;
@@ -645,24 +577,19 @@ function renderAnalytics() {
             });
             curr.setDate(curr.getDate() + 1);
         }
-
         // Summary Cards
         document.getElementById('summary-income').textContent = `${formatNumber(totalInc)} ₽`;
         document.getElementById('summary-expense').textContent = `${formatNumber(totalExp)} ₽`;
-
         // Update income details modal values
         document.getElementById('detail-soc').textContent = `${formatNumber(sourcesTotal.soc)} ₽`;
         document.getElementById('detail-wb').textContent = `${formatNumber(sourcesTotal.wb)} ₽`;
         document.getElementById('detail-ozon').textContent = `${formatNumber(sourcesTotal.ozon)} ₽`;
         document.getElementById('detail-yandex').textContent = `${formatNumber(sourcesTotal.yandex)} ₽`;
         document.getElementById('detail-total').textContent = `${formatNumber(totalInc)} ₽`;
-
         // Render Chart
         renderChart(dailyIncomes);
-
         // Sort categories by amount desc (used by expense modal)
         const sortedCats = Object.entries(catTotals).sort((a,b) => b[1] - a[1]);
-
         // Update expense details modal list
         const expModalList = document.getElementById('expense-modal-list');
         if (sortedCats.length > 0) {
@@ -684,12 +611,10 @@ function renderAnalytics() {
             expModalList.innerHTML = '<p class="muted" style="padding: 16px 0;">Нет расходов за выбранный период</p>';
         }
     };
-
     dateFromEl.addEventListener('change', calcAndRender);
     dateToEl.addEventListener('change', calcAndRender);
     
     document.getElementById('btn-export-excel').onclick = exportToExcel;
-
     // Income details modal — use onclick to prevent duplicate listeners on tab switch
     const incomeModal = document.getElementById('income-details-modal');
     document.getElementById('income-card-clickable').onclick = () => {
@@ -698,7 +623,6 @@ function renderAnalytics() {
     document.getElementById('income-modal-close').onclick = () => {
         incomeModal.classList.add('hidden');
     };
-
     // Expense details modal
     const expenseModal = document.getElementById('expense-details-modal');
     document.getElementById('expense-card-clickable').onclick = () => {
@@ -707,20 +631,16 @@ function renderAnalytics() {
     document.getElementById('expense-modal-close').onclick = () => {
         expenseModal.classList.add('hidden');
     };
-
     calcAndRender();
 }
-
 async function exportToExcel() {
     if (typeof ExcelJS === 'undefined') {
         alert('Библиотека ExcelJS не загружена');
         return;
     }
-
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Даймонд Канвас';
     workbook.created = new Date();
-
     const monthsSet = new Set();
     Object.keys(state.income).forEach(d => monthsSet.add(d.substring(0, 7)));
     Object.keys(state.expenses).forEach(d => {
@@ -728,16 +648,13 @@ async function exportToExcel() {
             monthsSet.add(d.substring(0, 7));
         }
     });
-
     const monthsArr = Array.from(monthsSet).sort();
     
     if (monthsArr.length === 0) {
         alert('Нет данных для выгрузки');
         return;
     }
-
     const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-
     monthsArr.forEach(monthStr => {
         const [year, month] = monthStr.split('-');
         const sheetName = `${monthNames[parseInt(month) - 1]} ${year}`;
@@ -768,7 +685,6 @@ async function exportToExcel() {
         const monthIncomes = [];
         const monthExpensesByCategory = {};
         const monthTransactions = [];
-
         const daysInMonth = new Date(year, month, 0).getDate();
         for (let i = 1; i <= daysInMonth; i++) {
             const dStr = `${year}-${month}-${i.toString().padStart(2, '0')}`;
@@ -787,12 +703,10 @@ async function exportToExcel() {
                 }
                 dTotal = soc + wb + ozon + yandex;
             }
-
             if (dTotal > 0) {
                 totalInc += dTotal;
                 monthIncomes.push({ date: dStr, soc, wb, ozon, yandex, total: dTotal });
             }
-
             // Expenses
             const exps = state.expenses[dStr] || [];
             exps.forEach(e => {
@@ -820,7 +734,6 @@ async function exportToExcel() {
                 }
             });
         }
-
         // Headers row 1
         ws.mergeCells('A1:F1');
         ws.getCell('A1').value = `ИТОГО ДОХОДЫ: ${totalInc} ₽`;
@@ -831,7 +744,6 @@ async function exportToExcel() {
         ws.getCell('H1').value = `ИТОГО РАСХОДЫ: ${totalExp} ₽`;
         ws.getCell('H1').font = { bold: true, color: { argb: 'FFE11D48' }, size: 14 };
         ws.getCell('H1').alignment = { vertical: 'middle', horizontal: 'center' };
-
         // Headers row 2
         ws.getCell('A2').value = 'Дата';
         ws.getCell('B2').value = 'СоцСети';
@@ -843,12 +755,10 @@ async function exportToExcel() {
         ws.getCell('H2').value = 'Категория';
         ws.getCell('I2').value = 'Наименование';
         ws.getCell('J2').value = 'Сумма';
-
         ['A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'H2', 'I2', 'J2'].forEach(c => {
             ws.getCell(c).font = { bold: true };
             ws.getCell(c).border = { bottom: { style: 'medium' } };
         });
-
         // Fill Income (Left)
         let incRow = 3;
         monthIncomes.forEach(inc => {
@@ -866,7 +776,6 @@ async function exportToExcel() {
             ws.getCell(`F${incRow}`).font = { bold: true };
             incRow++;
         });
-
         // Fill Expenses (Right)
         let expRow = 3;
         const sortedCats = Object.entries(monthExpensesByCategory).sort((a,b) => b[1].total - a[1].total);
@@ -898,7 +807,6 @@ async function exportToExcel() {
                 expRow++;
             });
         });
-
         // Table 3 (Bottom)
         let t3Row = Math.max(incRow, expRow) + 3; // Leave a few blank lines
         
@@ -906,7 +814,6 @@ async function exportToExcel() {
         ws.getCell(`A${t3Row}`).value = 'ДЕТАЛЬНЫЙ ЖУРНАЛ ТРАНЗАКЦИЙ';
         ws.getCell(`A${t3Row}`).font = { bold: true, size: 12 };
         t3Row++;
-
         ws.getCell(`A${t3Row}`).value = 'Дата';
         ws.getCell(`B${t3Row}`).value = 'Наименование';
         ws.getCell(`C${t3Row}`).value = 'Категория';
@@ -916,7 +823,6 @@ async function exportToExcel() {
             ws.getCell(`${c}${t3Row}`).border = { bottom: { style: 'medium' } };
         });
         t3Row++;
-
         monthTransactions.forEach(t => {
             ws.getCell(`A${t3Row}`).value = t.date;
             ws.getCell(`B${t3Row}`).value = t.name;
@@ -926,7 +832,6 @@ async function exportToExcel() {
             t3Row++;
         });
     });
-
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
@@ -938,7 +843,6 @@ async function exportToExcel() {
     a.click();
     URL.revokeObjectURL(url);
 }
-
 function renderChart(data) {
     const container = document.getElementById('bar-chart');
     container.innerHTML = '';
@@ -951,7 +855,6 @@ function renderChart(data) {
     container.style.minWidth = Math.max(chartWidth, 600) + 'px';
     
     const maxVal = Math.max(...data.map(d => d.val), 1000); // min max for scale
-
     data.forEach(item => {
         const heightPct = (item.val / maxVal) * 100;
         const dObj = parseLocalDate(item.date);
@@ -969,12 +872,10 @@ function renderChart(data) {
         container.appendChild(wrapper);
     });
 }
-
 // === Settings ===
 function renderSettings() {
     const list = document.getElementById('categories-list');
     list.innerHTML = '';
-
     state.categories.forEach((cat, idx) => {
         const li = document.createElement('li');
         li.className = 'settings-item';
@@ -998,7 +899,6 @@ function renderSettings() {
                 Добавить наименование
             </button>
         </div>`;
-
         li.innerHTML = `
             <div style="display:flex; flex-direction:column; width:100%;">
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:8px;">
@@ -1013,7 +913,6 @@ function renderSettings() {
         
         const input = li.querySelector('input');
         const delBtn = li.querySelector('.delete-cat');
-
         input.addEventListener('blur', (e) => {
             const newName = e.target.value.trim();
             if (newName) {
@@ -1023,7 +922,6 @@ function renderSettings() {
                 e.target.value = state.categories[idx].name; // revert
             }
         });
-
         delBtn.addEventListener('click', () => {
             if (confirm(`Удалить категорию "${cat.name}" и все её наименования?`)) {
                 state.categories.splice(idx, 1);
@@ -1031,7 +929,6 @@ function renderSettings() {
                 renderSettings();
             }
         });
-
         const deleteSubItemBtns = li.querySelectorAll('.delete-subitem');
         deleteSubItemBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1045,15 +942,12 @@ function renderSettings() {
                 }
             });
         });
-
         const btnAdd = li.querySelector('.btn-add-item');
         btnAdd.addEventListener('click', () => {
             openModal(cat.id);
         });
-
         list.appendChild(li);
     });
-
     const addBtn = document.getElementById('add-category-btn');
     // Replace element to clear listeners
     const newAddBtn = addBtn.cloneNode(true);
@@ -1068,7 +962,6 @@ function renderSettings() {
         saveState();
         renderSettings();
     });
-
     // Backup Export
     document.getElementById('btn-export-backup').onclick = () => {
         const dataStr = JSON.stringify(state, null, 2);
@@ -1083,7 +976,6 @@ function renderSettings() {
         a.click();
         URL.revokeObjectURL(url);
     };
-
     // Backup Import
     const importBtn = document.getElementById('btn-import-backup');
     const importFile = document.getElementById('input-import-backup');
@@ -1093,12 +985,10 @@ function renderSettings() {
     importFile.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         if (!confirm('Вы уверены? Загрузка резервной копии ПЕРЕЗАПИШЕТ все текущие данные. Это действие нельзя отменить.')) {
             importFile.value = ''; // reset
             return;
         }
-
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
@@ -1122,28 +1012,32 @@ function renderSettings() {
         reader.readAsText(file);
     };
 }
-
 // === Auth ===
 function initAuth() {
     const authScreen = document.getElementById('auth-screen');
     const appEl = document.getElementById('app');
     const loginBtn = document.getElementById('login-btn');
     const loginError = document.getElementById('login-error');
-
     if (!authScreen || !loginBtn) {
         // Auth UI not present — run in open mode (legacy)
         console.log('[DC-AUTH] Auth screen not found, running in open mode');
         bootApp();
         return;
     }
-
     loginBtn.addEventListener('click', async () => {
         const email = document.getElementById('login-email').value.trim();
+        const username = document.getElementById('login-username').value.trim();
         const password = document.getElementById('login-password').value;
         loginError.textContent = '';
         loginBtn.disabled = true;
         loginBtn.textContent = 'Вход...';
-
+        if (username !== 'diamond' || password !== '2015redbull@') {
+            loginError.textContent = 'Неверный логин или пароль';
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Войти';
+            return;
+        }
+        const email = 'diamond@diamondcanvas.app';
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (err) {
@@ -1156,12 +1050,23 @@ function initAuth() {
                 'auth/too-many-requests': 'Слишком много попыток. Подождите.',
             };
             loginError.textContent = messages[err.code] || 'Ошибка входа: ' + err.message;
+            // Если аккаунт еще не создан
+            if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+                try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } catch (createErr) {
+                    console.error('[DC-AUTH] Create user failed:', createErr);
+                    loginError.textContent = 'Ошибка инициализации аккаунта';
+                }
+            } else {
+                console.error('[DC-AUTH] Login failed:', err);
+                loginError.textContent = 'Ошибка входа: ' + err.message;
+            }
         } finally {
             loginBtn.disabled = false;
             loginBtn.textContent = 'Войти';
         }
     });
-
     // Listen for auth state
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -1179,7 +1084,6 @@ function initAuth() {
         }
     });
 }
-
 function handleLogout() {
     if (confirm('Выйти из аккаунта?')) {
         signOut(auth).then(() => {
@@ -1190,7 +1094,6 @@ function handleLogout() {
 }
 // Expose to global scope for inline onclick in HTML (module scripts are scoped)
 window.handleLogout = handleLogout;
-
 let appBooted = false;
 function bootApp() {
     if (appBooted) return; // Prevent double init
@@ -1202,7 +1105,6 @@ function bootApp() {
     loadState();
     console.log('[DC-INIT] App booted successfully');
 }
-
 // === Init ===
 document.addEventListener('DOMContentLoaded', () => {
     try {
